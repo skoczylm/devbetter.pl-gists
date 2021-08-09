@@ -1,0 +1,40 @@
+// Require the framework and instantiate it
+const fastify = require('fastify')({ logger: true });
+const path = require('path');
+
+const io = require('socket.io')(fastify.server);
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('chat message', (msg) => {
+    console.log('message: ' + msg);
+    io.emit('chat message', msg);
+  });
+});
+
+// Rejestracja pluginu fastify-static
+fastify.register(require('fastify-static'), {
+  root: path.join(__dirname, 'public'),
+  prefix: '/public/', // optional: default '/'
+});
+
+fastify.register(require('fastify-static'), {
+  root: path.join(__dirname, 'node_modules/socket.io'), prefix: '/socket-io/', decorateReply: false
+});
+
+// Declare a route
+fastify.get('/', async (request, reply) => {
+  return { hello: 'world' }
+});
+
+// Run the server!
+const start = async () => {
+  try {
+    await fastify.listen(3000);
+  } catch (err) {
+    fastify.log.error(err)
+    process.exit(1)
+  }
+};
+
+start();
